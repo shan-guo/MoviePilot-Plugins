@@ -64,7 +64,7 @@ class CloudAssistant(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/thsrite/MoviePilot-Plugins/main/icons/cloudassistant.png"
     # 插件版本
-    plugin_version = "2.1.7"
+    plugin_version = "2.1.9"
     # 插件作者
     plugin_author = "thsrite"
     # 作者主页
@@ -377,7 +377,7 @@ class CloudAssistant(_PluginBase):
             other_files = []
             monitor_dir = self._dirconf.get(mon_path)
             recent_time = monitor_dir.get("recent_time", 3)
-            recent_time = int(recent_time) if recent_time.isdigit() else 3
+            recent_time = int(recent_time) if isinstance(recent_time, int) or recent_time.isdigit() else 3
             now_time = datetime.datetime.now() - datetime.timedelta(minutes=int(recent_time))
             # 查询指定时间后的转移记录
             logger.info(f"now_time={now_time}")
@@ -398,7 +398,7 @@ class CloudAssistant(_PluginBase):
             for video_file in video_files:
                 self.__handle_file(event_path=str(video_file), mon_path=mon_path)
 
-        logger.info("云盘助手全量同步监控目录完成！")
+        logger.info("云盘助手按最近转移记录同步监控目录完成！")
 
     def event_handler(self, event, mon_path: str, text: str, event_path: str):
         """
