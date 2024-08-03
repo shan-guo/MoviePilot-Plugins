@@ -64,7 +64,7 @@ class CloudAssistant(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/thsrite/MoviePilot-Plugins/main/icons/cloudassistant.png"
     # 插件版本
-    plugin_version = "2.1.9"
+    plugin_version = "2.1.10"
     # 插件作者
     plugin_author = "thsrite"
     # 作者主页
@@ -381,7 +381,7 @@ class CloudAssistant(_PluginBase):
             now_time = datetime.datetime.now() - datetime.timedelta(minutes=int(recent_time))
             # 查询指定时间后的转移记录
             logger.info(f"now_time={now_time}")
-            transfer_files = self.__get_transfer_history_by_date(now_time.strftime("%Y-%m-%d %H:%M:%S"), mon_path)
+            transfer_files = self.__get_transfer_history_by_date(db=None, date=now_time.strftime("%Y-%m-%d %H:%M:%S"))
             logger.info(f"transfer_files={transfer_files}")
             for trans in transfer_files:
                 file_path = trans['dest']
