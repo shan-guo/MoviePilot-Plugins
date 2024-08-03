@@ -58,7 +58,7 @@ class CloudFileMonitorHandler(FileSystemEventHandler):
 
 class CloudAssistant(_PluginBase):
     # 插件名称
-    plugin_name = "云盘助手"
+    plugin_name = "云盘助手Plus"
     # 插件描述
     plugin_desc = "本地文件定时转移到云盘，软连接/strm回本地，定时清理无效软连接。"
     # 插件图标
@@ -366,6 +366,36 @@ class CloudAssistant(_PluginBase):
 
         logger.info("云盘助手全量同步监控目录完成！")
 
+    def sync_one(self):
+        """
+        立即运行一次，同步当次下载文件
+        """
+        logger.info("云盘助手单个同步监控目录 ...")
+
+        # 遍历所有监控目录
+        for mon_path in self._dirconf.keys():
+            video_files = []
+            other_files = []
+            # 遍历目录下所有文件
+            for root, dirs, files in os.walk(mon_path):
+                for name in dirs + files:
+                    file_path = os.path.join(root, name)
+                    if Path(str(file_path)).is_file():
+                        if Path(str(file_path)).suffix.lower() in [ext.strip() for ext in
+                                                                   self._rmt_mediaext.split(",")]:
+                            video_files.append(file_path)
+                        else:
+                            other_files.append(file_path)
+
+            # Then, handle other files
+            for other_file in other_files:
+                self.__handle_file(event_path=str(other_file), mon_path=mon_path)
+            # First, handle video files
+            for video_file in video_files:
+                self.__handle_file(event_path=str(video_file), mon_path=mon_path)
+
+        logger.info("云盘助手全量同步监控目录完成！")
+
     def event_handler(self, event, mon_path: str, text: str, event_path: str):
         """
         处理文件变化
@@ -462,6 +492,7 @@ class CloudAssistant(_PluginBase):
                                                                                          self._rmt_mediaext.split(
                                                                                              ",")]):
                     upload = True
+                    logger.info(f"开始检测云盘文件 {mount_file} 是否已上传")
                     if str(overwrite) == "false":
                         if Path(mount_file).exists():
                             logger.info(f"云盘文件 {mount_file} 已存在且未开启覆盖，跳过上传")
@@ -1128,13 +1159,22 @@ class CloudAssistant(_PluginBase):
         }]
 
     def get_api(self) -> List[Dict[str, Any]]:
-        return [{
-            "path": "/cloud_assistant",
-            "endpoint": self.sync,
-            "methods": ["GET"],
-            "summary": "云盘助手同步",
-            "description": "云盘助手同步",
-        }]
+        return [
+            {
+                "path": "/cloud_assistant",
+                "endpoint": self.sync,
+                "methods": ["GET"],
+                "summary": "云盘助手同步",
+                "description": "云盘助手同步",
+            },
+            {
+                "path": "/cloud_assistant/single",
+                "endpoint": self.sync_single,
+                "methods": ["GET"],
+                "summary": "云盘助手同步单个项目",
+                "description": "云盘助手同步单个项目",
+            }
+        ]
 
     def get_service(self) -> List[Dict[str, Any]]:
         """
@@ -1164,6 +1204,15 @@ class CloudAssistant(_PluginBase):
         if apikey != settings.API_TOKEN:
             return schemas.Response(success=False, message="API密钥错误")
         self.sync_all()
+        return schemas.Response(success=True)
+
+    def sync_single(self, apikey: str) -> schemas.Response:
+        """
+        API调用目录同步
+        """
+        if apikey != settings.API_TOKEN:
+            return schemas.Response(success=False, message="API密钥错误")
+        self.sync_one()
         return schemas.Response(success=True)
 
     def get_form(self) -> Tuple[List[dict], Dict[str, Any]]:
