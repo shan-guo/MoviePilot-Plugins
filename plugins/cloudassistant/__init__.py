@@ -372,20 +372,24 @@ class CloudAssistant(_PluginBase):
         """
         logger.info("云盘助手单个同步监控目录 ...")
 
-        # 遍历所有监控目录
         for mon_path in self._dirconf.keys():
             video_files = []
             other_files = []
-            # 遍历目录下所有文件
-            for root, dirs, files in os.walk(mon_path):
-                for name in dirs + files:
-                    file_path = os.path.join(root, name)
-                    if Path(str(file_path)).is_file():
-                        if Path(str(file_path)).suffix.lower() in [ext.strip() for ext in
-                                                                   self._rmt_mediaext.split(",")]:
-                            video_files.append(file_path)
-                        else:
-                            other_files.append(file_path)
+            monitor_dir = self._dirconf.get(mon_path)
+            recent_time = monitor_dir.get("recent_time", 3)
+            recent_time = int(recent_time) if recent_time.isdigit() else 3
+            now_time = datetime.datetime.now() - datetime.timedelta(minutes=int(recent_time))
+            # 查询指定时间后的转移记录
+            logger.info(f"now_time={now_time}")
+            transfer_files = self.__get_transfer_history_by_date(now_time.strftime("%Y-%m-%d %H:%M:%S"), mon_path)
+            logger.info(f"transfer_files={transfer_files}")
+            for trans in transfer_files:
+                file_path = trans['dest']
+                if Path(str(file_path)).is_file():
+                    if Path(str(file_path)).suffix.lower() in [ext.strip() for ext in self._rmt_mediaext.split(",")]:
+                        video_files.append(file_path)
+                    else:
+                        other_files.append(file_path)
 
             # Then, handle other files
             for other_file in other_files:
@@ -491,7 +495,8 @@ class CloudAssistant(_PluginBase):
                 logger.info(f"{exts}")
                 logger.info(f"file_path={Path(file_path).suffix.lower()}")
                 # 上传cloud时，如果不是仅媒体文件，则全上传，如果是仅媒体文件，则只上传媒体文件
-                if str(upload_cloud) == "true" and str(only_media) == "false" or (str(only_media) == "true" and Path(file_path).suffix.lower() in exts):
+                if str(upload_cloud) == "true" and str(only_media) == "false" or (
+                        str(only_media) == "true" and Path(file_path).suffix.lower() in exts):
                     upload = True
                     if str(overwrite) == "false":
                         if Path(mount_file).exists():
@@ -1872,3 +1877,11 @@ class CloudAssistant(_PluginBase):
         """
         DownloadFiles.delete_by_fullpath(db, fullpath)
         db.commit()
+
+    @staticmethod
+    @db_query
+    def __get_transfer_history_by_date(db: Optional[Session], date: str) -> List[DownloadFiles]:
+        """
+        根据日期查询转移文件记录
+        """
+        return TransferHistory.list_by_date(db, date)
