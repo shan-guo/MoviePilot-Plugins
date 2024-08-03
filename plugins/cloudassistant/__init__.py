@@ -64,7 +64,7 @@ class CloudAssistant(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/thsrite/MoviePilot-Plugins/main/icons/cloudassistant.png"
     # 插件版本
-    plugin_version = "2.1.6"
+    plugin_version = "2.1.7"
     # 插件作者
     plugin_author = "thsrite"
     # 作者主页
@@ -464,6 +464,7 @@ class CloudAssistant(_PluginBase):
                 src_preserve_hierarchy = monitor_dir.get("src_preserve_hierarchy") or 0
                 # 本地文件保留时间 （小时）
                 retention_time = monitor_dir.get("retention_time") or 0
+                exts = [ext.strip() for ext in self._rmt_mediaext.split(",")]
                 if not self._monitor and retention_time > 0:
                     creation_time = self.__get_file_creation_time(file_path)
                     creation_datetime = datetime.datetime.fromtimestamp(creation_time)
@@ -487,12 +488,10 @@ class CloudAssistant(_PluginBase):
                 mount_file = str(file_path).replace(str(mon_path), str(mount_path))
                 logger.info(f"开始检测云盘文件 {mount_file} 是否已上传")
                 logger.info(f" {upload_cloud=} {only_media=}")
-
+                logger.info(f"{exts}")
+                logger.info(f"file_path={Path(file_path).suffix.lower()}")
                 # 上传cloud时，如果不是仅媒体文件，则全上传，如果是仅媒体文件，则只上传媒体文件
-                if str(upload_cloud) == "true" and str(only_media) == "false" or (
-                        str(only_media) == "true" and Path(file_path).suffix.lower() in [ext.strip() for ext in
-                                                                                         self._rmt_mediaext.split(
-                                                                                             ",")]):
+                if str(upload_cloud) == "true" and str(only_media) == "false" or (str(only_media) == "true" and Path(file_path).suffix.lower() in exts):
                     upload = True
                     if str(overwrite) == "false":
                         if Path(mount_file).exists():
@@ -519,8 +518,9 @@ class CloudAssistant(_PluginBase):
 
                 # 2、软连接或者strm回本地路径
                 target_return_file = str(file_path).replace(str(mon_path), str(return_path))
-                if Path(target_return_file).suffix.lower() in [ext.strip() for ext in
-                                                               self._rmt_mediaext.split(",")]:
+                logger.info(f"target_return_file={Path(target_return_file).suffix.lower()}")
+
+                if Path(target_return_file).suffix.lower() in exts:
                     # 检查云盘文件是否存在
                     if not Path(mount_file).exists():
                         logger.info(f"挂载目录文件 {mount_file} 不存在，不创建 {self._return_mode}")
@@ -555,7 +555,7 @@ class CloudAssistant(_PluginBase):
                             "path": str(mount_file),
                             "type": "add"
                         })
-                else:
+                elif str(only_media) == "false":
                     # 其他nfo、jpg等复制文件
                     SystemUtils.copy(file_path, Path(target_return_file))
                     # shutil.copy2(str(file_path), target_return_file)
