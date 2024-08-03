@@ -485,6 +485,8 @@ class CloudAssistant(_PluginBase):
                 # 挂载的路径
                 logger.info(f"挂载目录文件 {file_path}")
                 mount_file = str(file_path).replace(str(mon_path), str(mount_path))
+                logger.info(f"开始检测云盘文件 {mount_file} 是否已上传")
+                logger.info(f" {upload_cloud=} {only_media=}")
 
                 # 上传cloud时，如果不是仅媒体文件，则全上传，如果是仅媒体文件，则只上传媒体文件
                 if str(upload_cloud) == "true" and str(only_media) == "false" or (
@@ -492,7 +494,6 @@ class CloudAssistant(_PluginBase):
                                                                                          self._rmt_mediaext.split(
                                                                                              ",")]):
                     upload = True
-                    logger.info(f"开始检测云盘文件 {mount_file} 是否已上传")
                     if str(overwrite) == "false":
                         if Path(mount_file).exists():
                             logger.info(f"云盘文件 {mount_file} 已存在且未开启覆盖，跳过上传")
