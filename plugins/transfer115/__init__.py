@@ -19,17 +19,17 @@ from app.schemas.types import EventType, SystemConfigKey
 lock = threading.Lock()
 
 
-class Transfer115(_PluginBase):
+class Upload115(_PluginBase):
     # 插件名称
-    plugin_name = "115转移"
+    plugin_name = "115上传"
     # 插件描述
-    plugin_desc = "将新入库的媒体文件，转移到115"
+    plugin_desc = "将新入库的媒体文件，上传到115"
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/honue/MoviePilot-Plugins/main/icons/clouddrive.png"
     # 插件版本
     plugin_version = "0.1.3"
     # 插件作者
-    plugin_author = "honue"
+    plugin_author = "shanguo"
     # 作者主页
     author_url = "https://github.com/honue"
     # 插件配置项ID前缀
